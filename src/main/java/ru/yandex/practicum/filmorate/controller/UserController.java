@@ -25,10 +25,7 @@ public class UserController {
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-
+        processUserName(user);
         user.setId(++counter);
         users.put(user.getId(), user);
         log.info("Добавлен пользователь: {}", user);
@@ -42,6 +39,8 @@ public class UserController {
             log.error("Id должен быть указан");
             throw new ValidationException("Id должен быть указан");
         }
+        processUserName(newUser);
+
         if (users.containsKey(newUser.getId())) {
             User oldUser = users.get(newUser.getId());
             log.info("Обновление пользователя: {}", oldUser);
@@ -59,4 +58,9 @@ public class UserController {
         throw new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден");
     }
 
+    private void processUserName(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
+    }
 }

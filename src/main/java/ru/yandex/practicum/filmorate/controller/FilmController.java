@@ -45,6 +45,8 @@ public class FilmController {
             log.error("Id должен быть указан");
             throw new ValidationException("Id должен быть указан");
         }
+        validateReleaseDate(newFilm.getReleaseDate());
+
         if (films.containsKey(newFilm.getId())) {
             Film oldFilm = films.get(newFilm.getId());
             log.info("Обновление фильма: {}", oldFilm);
@@ -52,7 +54,6 @@ public class FilmController {
 
             oldFilm.setName(newFilm.getName());
             oldFilm.setDescription(newFilm.getDescription());
-            validateReleaseDate(newFilm.getReleaseDate());
             oldFilm.setReleaseDate(newFilm.getReleaseDate());
             oldFilm.setDuration(newFilm.getDuration());
 
