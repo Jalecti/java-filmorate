@@ -3,6 +3,9 @@ package ru.yandex.practicum.filmorate.controller;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
 
@@ -15,20 +18,20 @@ class FilmControllerTest {
         assertThrows(ValidationException.class, () -> {
             Film film = new Film();
             film.setReleaseDate(LocalDate.of(1895, 12, 27));
-            new FilmController().create(film);
+            new FilmController(new FilmService(new InMemoryFilmStorage(), new InMemoryUserStorage())).create(film);
         });
 
         assertDoesNotThrow(() -> {
             Film film = new Film();
             film.setReleaseDate(LocalDate.of(1895, 12, 28));
-            Film created = new FilmController().create(film);
+            Film created = new FilmController(new FilmService(new InMemoryFilmStorage(), new InMemoryUserStorage())).create(film);
         });
     }
 
     @Test
     public void shouldThrowValidationExceptionWhenUpdateFilmAndReleaseDateIsBeforeThenBirthdayOfWorldCinema() {
         assertThrows(ValidationException.class, () -> {
-            FilmController filmController = new FilmController();
+            FilmController filmController = new FilmController(new FilmService(new InMemoryFilmStorage(), new InMemoryUserStorage()));
             Film film = new Film();
             film.setReleaseDate(LocalDate.of(2000, 1, 1));
             filmController.create(film);
@@ -39,7 +42,7 @@ class FilmControllerTest {
         });
 
         assertDoesNotThrow(() -> {
-            FilmController filmController = new FilmController();
+            FilmController filmController = new FilmController(new FilmService(new InMemoryFilmStorage(), new InMemoryUserStorage()));
             Film film = new Film();
             film.setReleaseDate(LocalDate.of(2000, 1, 1));
             filmController.create(film);
