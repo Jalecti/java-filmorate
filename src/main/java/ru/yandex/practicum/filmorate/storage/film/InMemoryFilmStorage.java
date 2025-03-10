@@ -25,6 +25,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Collection<Film> findAll() {
+        log.info("Поиск всех фильмов");
         return films.values();
     }
 
@@ -65,15 +66,14 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film delete(Long filmId) {
-        checkFilm(filmId);
-        Film deleted = films.get(filmId);
+        Film deleted = checkFilm(filmId);
         films.remove(filmId);
         log.info("Фильм с id={} удален", filmId);
         return deleted;
     }
 
     @Override
-    public void checkFilm(Long filmId) {
+    public Film checkFilm(Long filmId) {
         if (filmId == null) {
             log.error("Id должен быть указан");
             throw new ValidationException("Id должен быть указан");
@@ -83,12 +83,13 @@ public class InMemoryFilmStorage implements FilmStorage {
             log.error("Фильм с id={} не найден", filmId);
             throw new NotFoundException(String.format("Фильм с id=%d не найден", filmId));
         }
+
+        return films.get(filmId);
     }
 
     @Override
     public Film getFilmById(Long filmId) {
-        checkFilm(filmId);
-        return films.get(filmId);
+        return checkFilm(filmId);
     }
 
     private void validateReleaseDate(LocalDate releaseDate) {

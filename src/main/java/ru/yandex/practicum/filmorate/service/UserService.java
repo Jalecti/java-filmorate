@@ -35,9 +35,6 @@ public class UserService {
     }
 
     public void addToFriends(Long userId, Long friendId) {
-        userStorage.checkUser(userId);
-        userStorage.checkUser(friendId);
-
         User user = userStorage.getUserById(userId);
         User friend = userStorage.getUserById(friendId);
 
@@ -48,9 +45,6 @@ public class UserService {
     }
 
     public void deleteFromFriends(Long userId, Long friendId) {
-        userStorage.checkUser(userId);
-        userStorage.checkUser(friendId);
-
         User user = userStorage.getUserById(userId);
         User friend = userStorage.getUserById(friendId);
 
@@ -61,9 +55,6 @@ public class UserService {
     }
 
     public Collection<User> getCommonFriends(Long userId, Long otherId) {
-        userStorage.checkUser(userId);
-        userStorage.checkUser(otherId);
-
         User user = userStorage.getUserById(userId);
         User friend = userStorage.getUserById(otherId);
 
@@ -71,20 +62,14 @@ public class UserService {
         commonFriendsId.retainAll(friend.getUserFriends());
 
         Set<User> commonFriendsUsers = new HashSet<>();
-        commonFriendsId
-                .stream()
-                .forEach(uId -> commonFriendsUsers.add(userStorage.getUserById(uId)));
+        commonFriendsId.forEach(uId -> commonFriendsUsers.add(userStorage.getUserById(uId)));
 
         return commonFriendsUsers;
     }
 
     public Collection<User> getUserFriends(Long userId) {
-        userStorage.checkUser(userId);
-
         Set<User> userFriends = new HashSet<>();
-        userStorage.getUserById(userId).getUserFriends()
-                .stream()
-                .forEach(uId -> userFriends.add(userStorage.getUserById(uId)));
+        userStorage.getUserById(userId).getUserFriends().forEach(uId -> userFriends.add(userStorage.getUserById(uId)));
         return userFriends;
     }
 

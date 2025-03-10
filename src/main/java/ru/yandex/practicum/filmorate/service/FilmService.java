@@ -14,10 +14,6 @@ import java.util.*;
 public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-    private final TreeSet<Film> mostPopularFilms = new TreeSet<>(Comparator
-            .comparingInt((Film o) -> o.getUserIdLikes().size())
-            .reversed()
-    );
 
     @Autowired
     public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
@@ -38,9 +34,7 @@ public class FilmService {
     }
 
     public Film delete(Long filmId) {
-        Film deleted = filmStorage.delete(filmId);
-        mostPopularFilms.remove(deleted);
-        return deleted;
+        return filmStorage.delete(filmId);
     }
 
     public Film getFilmById(Long filmId) {
@@ -48,30 +42,23 @@ public class FilmService {
     }
 
     public void addLike(Long filmId, Long userId) {
-        filmStorage.checkFilm(filmId);
         userStorage.checkUser(userId);
 
-        Film likedFilm = filmStorage.getFilmById(filmId);
-        likedFilm.getUserIdLikes().add(userId);
+        filmStorage.getFilmById(filmId).getUserIdLikes().add(userId);
         log.info("Пользователю с id={} понравился фильм с id={}", userId, filmId);
-
-        mostPopularFilms.remove(likedFilm);
-        mostPopularFilms.add(likedFilm);
     }
 
     public void deleteLike(Long filmId, Long userId) {
-        filmStorage.checkFilm(filmId);
         userStorage.checkUser(userId);
 
-        Film unlikedFilm = filmStorage.getFilmById(filmId);
         filmStorage.getFilmById(filmId).getUserIdLikes().remove(userId);
         log.info("Пользователь с id={} убрал лайк у фильма с id={}", userId, filmId);
-
-        mostPopularFilms.remove(unlikedFilm);
-        mostPopularFilms.add(unlikedFilm);
     }
 
     public Collection<Film> getMostPopular(int count) {
-        return new ArrayList<>(mostPopularFilms).subList(0, Math.min(mostPopularFilms.size(), count));
+        List<Film> mostPopularFilms = new ArrayList<>(filmStorage.findAll());
+        mostPopularFilms.sort((f1, f2) -> f2.getUserIdLikes().size() - f1.getUserIdLikes().size());
+
+        return mostPopularFilms.subList(0, Math.min(mostPopularFilms.size(), count));
     }
 }

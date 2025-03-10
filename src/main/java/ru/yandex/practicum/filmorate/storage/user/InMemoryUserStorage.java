@@ -20,6 +20,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public Collection<User> findAll() {
+        log.info("Поиск всех пользователей");
         return users.values();
     }
 
@@ -60,15 +61,14 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User delete(Long userId) {
-        checkUser(userId);
-        User userToDelete = users.get(userId);
+        User userToDelete = checkUser(userId);
         users.remove(userId);
         log.info("Пользователь с id={} удален", userId);
         return userToDelete;
     }
 
     @Override
-    public void checkUser(Long userId) {
+    public User checkUser(Long userId) {
         if (userId == null) {
             log.error("Id должен быть указан");
             throw new ValidationException("Id должен быть указан");
@@ -78,12 +78,13 @@ public class InMemoryUserStorage implements UserStorage {
             log.error("Пользователь с id={} не найден", userId);
             throw new NotFoundException(String.format("Пользователь с id=%d не найден", userId));
         }
+
+        return users.get(userId);
     }
 
     @Override
     public User getUserById(Long userId) {
-        checkUser(userId);
-        return users.get(userId);
+        return checkUser(userId);
     }
 
     private void processUserName(User user) {
