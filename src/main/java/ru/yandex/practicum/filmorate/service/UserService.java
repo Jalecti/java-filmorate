@@ -3,6 +3,8 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.model.Friendship;
+import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -38,8 +40,11 @@ public class UserService {
         User user = userStorage.getUserById(userId);
         User friend = userStorage.getUserById(friendId);
 
-        user.getUserFriends().add(friendId);
-        friend.getUserFriends().add(userId);
+        Set<Friendship> userFriends = user.getUserFriends();
+        Set<Friendship> friendFriends = friend.getUserFriends();
+
+        userFriends.add(new Friendship(friendId, FriendshipStatus.CONFIRMED));
+        friendFriends.add(new Friendship(userId, FriendshipStatus.CONFIRMED));
 
         log.info("Пользователи с id={} и id={} добавлены в друзья друг к другу", userId, friendId);
     }
@@ -48,8 +53,11 @@ public class UserService {
         User user = userStorage.getUserById(userId);
         User friend = userStorage.getUserById(friendId);
 
-        user.getUserFriends().remove(friendId);
-        friend.getUserFriends().remove(userId);
+        Set<Friendship> userFriends = user.getUserFriends();
+        Set<Friendship> friendFriends = friend.getUserFriends();
+
+        userFriends.removeIf(friendShip -> friendShip.getFriendId().equals(friendId));
+        friendFriends.removeIf(friendShip -> friendShip.getFriendId().equals(userId));
 
         log.info("Пользователи с id={} и id={} удалены из друзей друг у друга", userId, friendId);
     }
@@ -58,18 +66,18 @@ public class UserService {
         User user = userStorage.getUserById(userId);
         User friend = userStorage.getUserById(otherId);
 
-        Set<Long> commonFriendsId = new HashSet<>(user.getUserFriends());
+        Set<Friendship> commonFriendsId = new HashSet<>(user.getUserFriends());
         commonFriendsId.retainAll(friend.getUserFriends());
 
         Set<User> commonFriendsUsers = new HashSet<>();
-        commonFriendsId.forEach(uId -> commonFriendsUsers.add(userStorage.getUserById(uId)));
+        commonFriendsId.forEach(uId -> commonFriendsUsers.add(userStorage.getUserById(uId.getFriendId())));
 
         return commonFriendsUsers;
     }
 
     public Collection<User> getUserFriends(Long userId) {
         Set<User> userFriends = new HashSet<>();
-        userStorage.getUserById(userId).getUserFriends().forEach(uId -> userFriends.add(userStorage.getUserById(uId)));
+        userStorage.getUserById(userId).getUserFriends().forEach(uId -> userFriends.add(userStorage.getUserById(uId.getFriendId())));
         return userFriends;
     }
 
