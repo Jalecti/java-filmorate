@@ -53,19 +53,19 @@ public class FriendshipRepository extends BaseRepository<Friendship> {
         return findOne(FIND_BY_ID_QUERY, userId, friendId);
     }
 
-    public void addToFriends(Long user_id, Long friend_id) {
-        Optional<Friendship> unconfirmedFriendship = findFriendshipById(friend_id, user_id);
+    public void addToFriends(Long userId, Long friendId) {
+        Optional<Friendship> unconfirmedFriendship = findFriendshipById(friendId, userId);
         FriendshipStatus friendshipStatus = FriendshipStatus.UNCONFIRMED;
         if (unconfirmedFriendship.isPresent()) {
             friendshipStatus = FriendshipStatus.CONFIRMED;
         }
-        Integer status_id = jdbc.queryForObject(GET_FRIENDSHIP_STATUS_ID_QUERY, Integer.class, friendshipStatus.toString());
-        jdbc.update(ADD_FRIENDS_QUERY, user_id, friend_id, status_id);
-        jdbc.update(UPDATE_FRIENDS_QUERY, status_id, friend_id, user_id);
+        Integer statusId = jdbc.queryForObject(GET_FRIENDSHIP_STATUS_ID_QUERY, Integer.class, friendshipStatus.toString());
+        jdbc.update(ADD_FRIENDS_QUERY, userId, friendId, statusId);
+        jdbc.update(UPDATE_FRIENDS_QUERY, statusId, friendId, userId);
     }
 
-    public void deleteFromFriends(Long user_id, Long friend_id) {
-        jdbc.update(DELETE_FRIENDS_QUERY, user_id, friend_id);
+    public void deleteFromFriends(Long userId, Long friendId) {
+        jdbc.update(DELETE_FRIENDS_QUERY, userId, friendId);
     }
 
     public void deleteAll() {
