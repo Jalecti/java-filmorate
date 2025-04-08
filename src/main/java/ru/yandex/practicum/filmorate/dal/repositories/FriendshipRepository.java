@@ -45,8 +45,8 @@ public class FriendshipRepository extends BaseRepository<Friendship> {
         super(jdbc, mapper);
     }
 
-    public Collection<Friendship> findAll(Long user_id) {
-        return findMany(FIND_ALL_QUERY, user_id);
+    public Collection<Friendship> findAll(Long userId) {
+        return findMany(FIND_ALL_QUERY, userId);
     }
 
     public Optional<Friendship> findFriendshipById(Long userId, Long friendId) {
