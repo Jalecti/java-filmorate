@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
+import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
+import ru.yandex.practicum.filmorate.dto.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
@@ -17,28 +19,28 @@ public class FilmController {
     private final FilmService filmService;
 
     @GetMapping
-    public Collection<Film> findAll() {
+    public Collection<FilmDto> findAll() {
         return filmService.findAll();
     }
 
     @GetMapping("/{filmId}")
-    public Film getFilmById(@PathVariable Long filmId) {
+    public FilmDto getFilmById(@PathVariable Long filmId) {
         return filmService.getFilmById(filmId);
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getMostPopular(@RequestParam(required = false, defaultValue = "10") int count) {
+    public Collection<FilmDto> getMostPopular(@RequestParam(required = false, defaultValue = "10") int count) {
         return filmService.getMostPopular(count);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Film create(@Valid @RequestBody Film film) {
-        return filmService.create(film);
+    public FilmDto create(@Valid @RequestBody NewFilmRequest filmRequest) {
+        return filmService.create(filmRequest);
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody Film newFilm) {
+    public FilmDto update(@Valid @RequestBody UpdateFilmRequest newFilm) {
         return filmService.update(newFilm);
     }
 
@@ -50,7 +52,7 @@ public class FilmController {
 
     @DeleteMapping("/{filmId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Film delete(@PathVariable Long filmId) {
+    public boolean delete(@PathVariable Long filmId) {
         return filmService.delete(filmId);
     }
 

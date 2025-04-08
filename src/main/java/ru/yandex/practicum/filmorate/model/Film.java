@@ -5,9 +5,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Data
 @EqualsAndHashCode(of = {"id"})
@@ -21,15 +18,11 @@ public class Film {
     private String description;
 
     @NotNull
-    private LocalDate releaseDate;
-
-    @NotNull
     @Positive
     private Integer duration;
 
-    private List<Genre> genres;
+    @NotNull
+    private LocalDate releaseDate;
 
-    private Rating rating;
-
-    private Set<Long> userIdLikes = new HashSet<>();
+    private Rating mpa;
 }
