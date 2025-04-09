@@ -1,87 +1,123 @@
 package ru.yandex.practicum.filmorate.service;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.model.Friendship;
-import ru.yandex.practicum.filmorate.model.FriendshipStatus;
+import ru.yandex.practicum.filmorate.dal.repositories.FriendshipRepository;
+import ru.yandex.practicum.filmorate.dal.repositories.UserRepository;
+import ru.yandex.practicum.filmorate.dto.NewUserRequest;
+import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.mapper.UserMapper;
+import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class UserService {
-    private final UserStorage userStorage;
+    private final UserRepository userRepository;
+    private final FriendshipRepository friendshipRepository;
 
     @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
+    public UserService(UserRepository userRepository, FriendshipRepository friendshipRepository) {
+        this.userRepository = userRepository;
+        this.friendshipRepository = friendshipRepository;
     }
 
-    public Collection<User> findAll() {
-        return userStorage.findAll();
+    public Collection<UserDto> findAll() {
+        return userRepository.findAll()
+                .stream()
+                .map(UserMapper::mapToUserDto)
+                .collect(Collectors.toList());
     }
 
-    public User create(User user) {
-        return userStorage.create(user);
+    public UserDto create(@Valid NewUserRequest request) {
+        User user = UserMapper.mapToUser(request);
+        user = userRepository.create(user);
+        return UserMapper.mapToUserDto(user);
     }
 
-    public User update(User newUser) {
-        return userStorage.update(newUser);
+    public UserDto update(UpdateUserRequest request) {
+        User updatedUser = userRepository.getUserById(request.getId())
+                .map(user -> UserMapper.updateUserFields(user, request))
+                .orElseThrow(() -> {
+                    log.error("Пользователь не найден с ID: {}", request.getId());
+                    return new NotFoundException("Пользователь не найден с ID: " + request.getId());
+                });
+        updatedUser = userRepository.update(updatedUser);
+        return UserMapper.mapToUserDto(updatedUser);
     }
 
-    public User delete(Long userId) {
-        return userStorage.delete(userId);
+    public boolean delete(Long userId) {
+        checkUser(userId);
+        return userRepository.delete(userId);
     }
 
     public void addToFriends(Long userId, Long friendId) {
-        User user = userStorage.getUserById(userId);
-        User friend = userStorage.getUserById(friendId);
+        checkUser(userId);
+        checkUser(friendId);
 
-        Set<Friendship> userFriends = user.getUserFriends();
-        Set<Friendship> friendFriends = friend.getUserFriends();
-
-        userFriends.add(new Friendship(friendId, FriendshipStatus.CONFIRMED));
-        friendFriends.add(new Friendship(userId, FriendshipStatus.CONFIRMED));
-
+        friendshipRepository.addToFriends(userId, friendId);
         log.info("Пользователи с id={} и id={} добавлены в друзья друг к другу", userId, friendId);
     }
 
     public void deleteFromFriends(Long userId, Long friendId) {
-        User user = userStorage.getUserById(userId);
-        User friend = userStorage.getUserById(friendId);
+        checkUser(userId);
+        checkUser(friendId);
 
-        Set<Friendship> userFriends = user.getUserFriends();
-        Set<Friendship> friendFriends = friend.getUserFriends();
-
-        userFriends.removeIf(friendShip -> friendShip.getFriendId().equals(friendId));
-        friendFriends.removeIf(friendShip -> friendShip.getFriendId().equals(userId));
-
+        friendshipRepository.deleteFromFriends(userId, friendId);
         log.info("Пользователи с id={} и id={} удалены из друзей друг у друга", userId, friendId);
     }
 
-    public Collection<User> getCommonFriends(Long userId, Long otherId) {
-        User user = userStorage.getUserById(userId);
-        User friend = userStorage.getUserById(otherId);
+    public Collection<UserDto> getCommonFriends(Long userId, Long otherId) {
+        checkUser(userId);
+        checkUser(otherId);
 
-        Set<Friendship> commonFriendsId = new HashSet<>(user.getUserFriends());
-        commonFriendsId.retainAll(friend.getUserFriends());
+        Set<UserDto> commonFriends = new HashSet<>();
+        friendshipRepository.findAll(userId).forEach(friendship -> {
+            Optional<User> user = userRepository.getUserById(friendship.getFriendId());
+            user.ifPresent(value -> commonFriends.add(UserMapper.mapToUserDto(value)));
+        });
 
-        Set<User> commonFriendsUsers = new HashSet<>();
-        commonFriendsId.forEach(uId -> commonFriendsUsers.add(userStorage.getUserById(uId.getFriendId())));
-
-        return commonFriendsUsers;
+        Set<UserDto> otherFriends = new HashSet<>();
+        friendshipRepository.findAll(otherId).forEach(friendship -> {
+            Optional<User> user = userRepository.getUserById(friendship.getFriendId());
+            user.ifPresent(value -> otherFriends.add(UserMapper.mapToUserDto(value)));
+        });
+        commonFriends.retainAll(otherFriends);
+        return commonFriends;
     }
 
-    public Collection<User> getUserFriends(Long userId) {
-        Set<User> userFriends = new HashSet<>();
-        userStorage.getUserById(userId).getUserFriends().forEach(uId -> userFriends.add(userStorage.getUserById(uId.getFriendId())));
+    public Collection<UserDto> getUserFriends(Long userId) {
+        checkUser(userId);
+
+        Set<UserDto> userFriends = new HashSet<>();
+        friendshipRepository.findAll(userId).forEach(friendship -> {
+            Optional<User> user = userRepository.getUserById(friendship.getFriendId());
+            user.ifPresent(value -> userFriends.add(UserMapper.mapToUserDto(value)));
+        });
+
         return userFriends;
     }
 
-    public User getUserById(Long userId) {
-        return userStorage.getUserById(userId);
+    public UserDto getUserById(Long userId) {
+        return userRepository.getUserById(userId)
+                .map(UserMapper::mapToUserDto)
+                .orElseThrow(() -> {
+                    log.error("Пользователь не найден с ID: {}", userId);
+                    return new NotFoundException("Пользователь не найден с ID: " + userId);
+                });
+    }
+
+    public void checkUser(Long userId) {
+        Optional<User> user = userRepository.getUserById(userId);
+        if (user.isEmpty()) {
+            log.error("Пользователь не найден с ID: {}", userId);
+            throw new NotFoundException("Пользователь не найден с ID: " + userId);
+        }
     }
 }
