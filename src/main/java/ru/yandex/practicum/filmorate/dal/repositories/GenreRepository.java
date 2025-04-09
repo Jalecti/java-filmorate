@@ -1,10 +1,8 @@
 package ru.yandex.practicum.filmorate.dal.repositories;
 
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.List;
@@ -54,11 +52,7 @@ public class GenreRepository extends BaseRepository<Genre> {
     }
 
     public Optional<Genre> findGenreById(Long genreId) {
-        try {
-            return findOne(FIND_BY_ID, genreId);
-        } catch (EmptyResultDataAccessException e) {
-            throw new NotFoundException("Жанр не найден в БД:" + e.getMessage());
-        }
+        return findOne(FIND_BY_ID, genreId);
     }
 
     public List<Genre> updateGenresForFilm(Long filmId, List<Genre> genres) {

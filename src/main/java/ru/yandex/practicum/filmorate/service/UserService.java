@@ -44,7 +44,10 @@ public class UserService {
     public UserDto update(UpdateUserRequest request) {
         User updatedUser = userRepository.getUserById(request.getId())
                 .map(user -> UserMapper.updateUserFields(user, request))
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+                .orElseThrow(() -> {
+                    log.error("Пользователь не найден с ID: {}", request.getId());
+                    return new NotFoundException("Пользователь не найден с ID: " + request.getId());
+                });
         updatedUser = userRepository.update(updatedUser);
         return UserMapper.mapToUserDto(updatedUser);
     }
@@ -104,12 +107,16 @@ public class UserService {
     public UserDto getUserById(Long userId) {
         return userRepository.getUserById(userId)
                 .map(UserMapper::mapToUserDto)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден с ID: " + userId));
+                .orElseThrow(() -> {
+                    log.error("Пользователь не найден с ID: {}", userId);
+                    return new NotFoundException("Пользователь не найден с ID: " + userId);
+                });
     }
 
     public void checkUser(Long userId) {
         Optional<User> user = userRepository.getUserById(userId);
         if (user.isEmpty()) {
+            log.error("Пользователь не найден с ID: {}", userId);
             throw new NotFoundException("Пользователь не найден с ID: " + userId);
         }
     }

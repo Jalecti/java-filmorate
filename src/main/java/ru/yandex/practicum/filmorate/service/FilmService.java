@@ -4,12 +4,14 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.repositories.FilmLikeRepository;
 import ru.yandex.practicum.filmorate.dal.repositories.FilmRepository;
 import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.FilmLike;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.time.LocalDate;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FilmService {
     private final FilmRepository filmRepository;
+    private final FilmLikeRepository filmLikeRepository;
     private final UserService userService;
     private final RatingService ratingService;
     private final GenreService genreService;
@@ -31,22 +34,26 @@ public class FilmService {
 
     @Autowired
     public FilmService(FilmRepository filmRepository,
+                       FilmLikeRepository filmLikeRepository,
                        UserService userService,
                        RatingService ratingService,
                        GenreService genreService) {
         this.filmRepository = filmRepository;
+        this.filmLikeRepository = filmLikeRepository;
         this.userService = userService;
         this.ratingService = ratingService;
         this.genreService = genreService;
-
     }
 
     public Collection<FilmDto> findAll() {
+        Map<Long, Integer> filmsLikesCount = getAllFilmsLikesCountMap();
+        Map<Long, List<Genre>> filmsGenres = genreService.getAllFilmsGenresMap();
+
         return filmRepository.findAll()
                 .stream()
                 .map(film -> {
-                    Integer likesCount = filmRepository.getCountLikes(film.getId());
-                    List<Genre> genres = genreService.getFilmGenres(film.getId());
+                    Integer likesCount = filmsLikesCount.get(film.getId());
+                    List<Genre> genres = filmsGenres.get(film.getId());
                     return FilmMapper.mapToFilmDto(film, genres, likesCount);
                 })
                 .collect(Collectors.toList());
@@ -75,7 +82,10 @@ public class FilmService {
                     if (request.hasGenres()) genreService.updateGenresForFilm(filmId, request.getGenres());
                     return FilmMapper.updateFilmFields(film, request);
                 })
-                .orElseThrow(() -> new NotFoundException("Фильм не найден"));
+                .orElseThrow(() -> {
+                    log.error("Фильм не найден с ID: {}", filmId);
+                    return new NotFoundException("Фильм не найден с ID: " + filmId);
+                });
         updatedFilm = filmRepository.update(updatedFilm);
         List<Genre> genres = genreService.getFilmGenres(filmId);
         int likesCount = filmRepository.getCountLikes(filmId);
@@ -93,7 +103,10 @@ public class FilmService {
                     List<Genre> genres = genreService.getFilmGenres(film.getId());
                     return FilmMapper.mapToFilmDto(film, genres, likesCount);
                 })
-                .orElseThrow(() -> new NotFoundException("Фильм не найден с ID: " + filmId));
+                .orElseThrow(() -> {
+                    log.error("Фильм не найден с ID: {}", filmId);
+                    return new NotFoundException("Фильм не найден с ID: " + filmId);
+                });
     }
 
     public void addLike(Long filmId, Long userId) {
@@ -112,16 +125,32 @@ public class FilmService {
         log.info("Пользователь с id={} убрал лайк у фильма с id={}", userId, filmId);
     }
 
-    public Collection<FilmDto> getMostPopular(int count) {
-        List<FilmDto> mostPopularFilms = new ArrayList<>(findAll());
-        mostPopularFilms.sort((f1, f2) -> f2.getLikesCount() - f1.getLikesCount());
+    public Map<Long, Integer> getAllFilmsLikesCountMap() {
+        return filmLikeRepository.findAll().stream()
+                .collect(Collectors.groupingBy(
+                        FilmLike::getFilmId,
+                        Collectors.summingInt(filmLike -> 1)
+                ));
+    }
 
-        return mostPopularFilms.subList(0, Math.min(mostPopularFilms.size(), count));
+    public Collection<FilmDto> getMostPopular(int count) {
+        Map<Long, Integer> filmsLikesCount = getAllFilmsLikesCountMap();
+        Map<Long, List<Genre>> filmsGenres = genreService.getAllFilmsGenresMap();
+
+        return filmRepository.findMostPopular(count)
+                .stream()
+                .map(film -> {
+                    Integer likesCount = filmsLikesCount.get(film.getId());
+                    List<Genre> genres = filmsGenres.get(film.getId());
+                    return FilmMapper.mapToFilmDto(film, genres, likesCount);
+                })
+                .collect(Collectors.toList());
     }
 
     private void checkFilm(Long filmId) {
         Optional<Film> film = filmRepository.getFilmById(filmId);
         if (film.isEmpty()) {
+            log.error("Фильм не найден с ID: {}", filmId);
             throw new NotFoundException("Фильм не найден с ID: " + filmId);
         }
     }

@@ -25,17 +25,19 @@ public class RatingService {
     }
 
     public Rating findRatingById(Long ratingId) {
-        return ratingRepository.getRatingById(ratingId)
-                .orElseThrow(() -> new NotFoundException("Рейтинг не найден с ID: " + ratingId));
+        Optional<Rating> rating = ratingRepository.getRatingById(ratingId);
+        if (rating.isEmpty()) {
+            log.error("Рейтинг не найден с ID: {}", ratingId);
+            throw new NotFoundException("Рейтинг не найден с ID: " + ratingId);
+        }
+        return rating.get();
     }
 
     public void checkRating(Long ratingId) {
-        if (ratingId != null) {
-            Optional<Rating> rating = ratingRepository.getRatingById(ratingId);
-            if (rating.isEmpty()) {
-                throw new NotFoundException("Рейтинг не найден с ID: " + ratingId);
-            }
+        Optional<Rating> rating = ratingRepository.getRatingById(ratingId);
+        if (rating.isEmpty()) {
+            log.error("Рейтинг не найден с ID: {}", ratingId);
+            throw new NotFoundException("Рейтинг не найден с ID: " + ratingId);
         }
     }
-
 }

@@ -58,6 +58,14 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String DELETE_ALL_FILMS_LIKES =
             "DELETE FROM users_film_likes;";
 
+    private static final String FIND_MOST_POPULAR_QUERY =
+            "SELECT f.*, r.rating_name " +
+                    "FROM films AS f " +
+                    "INNER JOIN ratings AS r ON f.rating_id = r.rating_id " +
+                    "LEFT JOIN users_film_likes AS ufl ON f.film_id = ufl.film_id " +
+                    "GROUP BY f.film_id " +
+                    "ORDER BY COUNT(ufl.user_id) DESC " +
+                    "LIMIT ?";
 
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> filmRowMapper) {
         super(jdbc, filmRowMapper);
@@ -126,5 +134,9 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     public void deleteAllFilmLikes() {
         jdbc.update(DELETE_ALL_FILMS_LIKES);
+    }
+
+    public Collection<Film> findMostPopular(int count) {
+        return findMany(FIND_MOST_POPULAR_QUERY, count);
     }
 }
