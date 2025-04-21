@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.repositories.FilmRepository;
 import ru.yandex.practicum.filmorate.dal.repositories.FriendshipRepository;
 import ru.yandex.practicum.filmorate.dal.repositories.UserEventRepository;
 import ru.yandex.practicum.filmorate.dal.repositories.UserRepository;
@@ -14,6 +15,7 @@ import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.model.EventOperation;
 import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.UserEvent;
 
@@ -26,6 +28,14 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final FriendshipRepository friendshipRepository;
+    private final FilmRepository filmRepository;
+
+    @Autowired
+    public UserService(UserRepository userRepository, FriendshipRepository friendshipRepository, FilmRepository filmRepository) {
+        this.userRepository = userRepository;
+        this.friendshipRepository = friendshipRepository;
+        this.filmRepository = filmRepository;
+    }
     private final UserEventRepository userEventRepository;
 
     public Collection<UserDto> findAll() {
@@ -126,5 +136,14 @@ public class UserService {
             log.error("Пользователь не найден с ID: {}", userId);
             throw new NotFoundException("Пользователь не найден с ID: " + userId);
         }
+    }
+
+    public Collection<Film> getRecommendationsForUser(Long userId) {
+        Integer likeCount = filmRepository.getCountLikes(userId);
+        if (likeCount == 0) {
+            return filmRepository.findPopularFilms();
+        }
+
+        return Collections.emptyList();
     }
 }
