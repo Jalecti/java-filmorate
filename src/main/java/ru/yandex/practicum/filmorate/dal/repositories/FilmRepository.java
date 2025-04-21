@@ -139,4 +139,8 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     public Collection<Film> findMostPopular(int count) {
         return findMany(FIND_MOST_POPULAR_QUERY, count);
     }
+
+    public Collection<Film> findPopularFilms() {
+        return findMany(FIND_MOST_POPULAR_QUERY, 10);
+    }
 }
