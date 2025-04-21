@@ -19,8 +19,14 @@ public class FriendshipRepository extends BaseRepository<Friendship> {
                     "WHERE fs.user_id = ?";
 
     private static final String FIND_BY_ID_QUERY =
-            "SELECT * FROM friendships " +
-                    "WHERE user_id = ? AND friend_id = ?";
+            "SELECT fs.user_id, " +
+                    "fs.friend_id, " +
+                    "u.login, " +
+                    "fss.friendship_status_name " +
+                    "FROM friendships AS fs " +
+                    "INNER JOIN friendship_statuses AS fss ON fs.status_id = fss.status_id " +
+                    "INNER JOIN users AS u ON fs.friend_id = u.user_id " +
+                    "WHERE fs.user_id = ? AND fs.friend_id = ?";
 
     private static final String ADD_FRIENDS_QUERY =
             "INSERT INTO friendships(user_id, friend_id, status_id) " +
