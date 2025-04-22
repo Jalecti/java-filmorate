@@ -7,15 +7,15 @@ import lombok.experimental.NonFinal;
 @Value
 public class Review {
     @NonFinal
-    Integer reviewId;
+    Long reviewId;
     @NotNull
     String content;
     @NotNull
     Boolean isPositive;
     @NotNull
-    Integer userId;
+    Long userId;
     @NotNull
-    Integer filmId;
+    Long filmId;
     @NonFinal
     Integer useful;
 }

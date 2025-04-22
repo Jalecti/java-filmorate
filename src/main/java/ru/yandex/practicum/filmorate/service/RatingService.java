@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,13 +13,9 @@ import java.util.Optional;
 
 @Service
 @Slf4j
+@AllArgsConstructor
 public class RatingService {
     private final RatingRepository ratingRepository;
-
-    @Autowired
-    public RatingService(RatingRepository ratingRepository) {
-        this.ratingRepository = ratingRepository;
-    }
 
     public Collection<Rating> findAll() {
         return ratingRepository.findAll();
