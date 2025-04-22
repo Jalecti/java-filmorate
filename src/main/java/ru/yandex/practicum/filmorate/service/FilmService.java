@@ -133,11 +133,11 @@ public class FilmService {
                 ));
     }
 
-    public Collection<FilmDto> getMostPopular(int count) {
+    public Collection<FilmDto> getMostPopular(Long count, Long genreId, Integer year) {
         Map<Long, Integer> filmsLikesCount = getAllFilmsLikesCountMap();
         Map<Long, List<Genre>> filmsGenres = genreService.getAllFilmsGenresMap();
 
-        return filmRepository.findMostPopular(count)
+        return filmRepository.findMostPopular(count, genreId, year)
                 .stream()
                 .map(film -> {
                     Integer likesCount = filmsLikesCount.get(film.getId());
