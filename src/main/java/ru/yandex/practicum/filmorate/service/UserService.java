@@ -15,7 +15,6 @@ import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -128,7 +127,7 @@ public class UserService {
 
     public Collection<Film> getRecommendationsForUser(Long userId) {
         Optional<User> user = userRepository.getUserById(userId);
-        if (!user.isPresent()) {
+        if (user.isEmpty()) {
             throw new NotFoundException("Пользователь не найден");
         }
 
