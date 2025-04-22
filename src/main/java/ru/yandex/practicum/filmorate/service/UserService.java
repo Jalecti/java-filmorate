@@ -15,6 +15,7 @@ import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -126,11 +127,19 @@ public class UserService {
     }
 
     public Collection<Film> getRecommendationsForUser(Long userId) {
-        Integer likeCount = filmRepository.getCountLikes(userId);
-        if (likeCount == 0) {
-            return filmRepository.findPopularFilms();
+        Optional<User> user = userRepository.getUserById(userId);
+        if (!user.isPresent()) {
+            throw new NotFoundException("Пользователь не найден");
         }
 
-        return Collections.emptyList();
+        Integer likeCount = filmRepository.getCountLikes(userId);
+
+        if (likeCount == 0) {
+            return Collections.emptyList();
+        }
+
+        Collection<Film> popularFilms = filmRepository.findMostPopular(likeCount);
+
+        return Collections.singletonList(popularFilms.iterator().next());
     }
 }

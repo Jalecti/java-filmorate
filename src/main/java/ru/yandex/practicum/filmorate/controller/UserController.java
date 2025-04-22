@@ -70,8 +70,8 @@ public class UserController {
         userService.deleteFromFriends(userId, friendId);
     }
 
-    @GetMapping("/users/{id}/recommendations")
-    public ResponseEntity<Collection<Film>> getRecommendations(@PathVariable Long id) {
+    @GetMapping("/{userId}/recommendations")
+    public ResponseEntity<Collection<Film>> getRecommendations(@PathVariable ("userId") Long id) {
         Collection<Film> recommendations = userService.getRecommendationsForUser(id);
 
         if (recommendations.isEmpty()) {
