@@ -68,7 +68,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                     "GROUP BY f.film_id " +
                     "ORDER BY COUNT(ufl.user_id) DESC " +
                     "LIMIT ?";
-    private static final String GET_COMMON_FILMS_QUERY = "SELECT *, r.RATING_NAME FROM films AS f " +
+    private static final String GET_COMMON_FILMS_QUERY = "SELECT f.*, r.RATING_NAME FROM films AS f " +
             "LEFT JOIN ratings AS r ON f.rating_id = r.rating_id " +
             "INNER  JOIN USERS_FILM_LIKES AS ufl1 ON f.FILM_ID = ufl1.film_id " +
             "INNER  JOIN USERS_FILM_LIKES AS ufl2 ON f.FILM_ID = ufl2.film_id " +
