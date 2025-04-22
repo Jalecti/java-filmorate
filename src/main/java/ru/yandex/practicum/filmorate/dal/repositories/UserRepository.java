@@ -2,10 +2,13 @@ package ru.yandex.practicum.filmorate.dal.repositories;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -80,5 +83,18 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
 
     public void deleteAll() {
         jdbc.update(DELETE_ALL_QUERY);
+    }
+
+    public List<Long> findUsersByLikedFilmIds(Collection<Long> filmIds) {
+        if (filmIds == null || filmIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String sql = "SELECT DISTINCT user_id FROM users_film_likes WHERE film_id IN (" +
+                String.join(",", Collections.nCopies(filmIds.size(), "?")) + ")";
+
+        Object[] params = filmIds.toArray();
+
+        return jdbc.queryForList(sql, params, Long.class);
     }
 }
