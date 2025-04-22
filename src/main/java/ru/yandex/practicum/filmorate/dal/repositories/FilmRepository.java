@@ -152,8 +152,4 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     public Collection<Film> getCommonFilms(Long userId, Long friendId) {
         return findMany(GET_COMMON_FILMS_QUERY, userId, friendId);
     }
-
-    public Collection<Film> findPopularFilms() {
-        return findMany(FIND_MOST_POPULAR_QUERY, 10);
-    }
 }
