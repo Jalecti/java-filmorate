@@ -126,19 +126,18 @@ public class UserService {
     }
 
     public Collection<Film> getRecommendationsForUser(Long userId) {
-        Optional<User> user = userRepository.getUserById(userId);
-        if (user.isEmpty()) {
-            throw new NotFoundException("Пользователь не найден");
-        }
+        checkUser(userId);
 
-        Integer likeCount = filmRepository.getCountLikes(userId);
+        Collection<Long> likedFilmIds = filmRepository.getLikedFilmIdsByUserId(userId);
 
-        if (likeCount == 0) {
+        if (likedFilmIds.isEmpty()) {
             return Collections.emptyList();
         }
 
-        Collection<Film> popularFilms = filmRepository.findMostPopular(likeCount);
+        List<Long> similarUserIds = userRepository.findUsersByLikedFilmIds(likedFilmIds);
 
-        return Collections.singletonList(popularFilms.iterator().next());
+        Collection<Film> recommendedFilms = filmRepository.findFilmsLikedByUsers(similarUserIds, likedFilmIds);
+
+        return recommendedFilms;
     }
 }

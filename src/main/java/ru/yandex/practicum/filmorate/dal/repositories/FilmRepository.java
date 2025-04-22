@@ -3,13 +3,17 @@ package ru.yandex.practicum.filmorate.dal.repositories;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dal.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 @Repository
 public class FilmRepository extends BaseRepository<Film> implements FilmStorage {
+
+    private final FilmRowMapper filmRowMapper;
 
     private static final String FIND_ALL_QUERY =
             "SELECT f.*, r.rating_name FROM films AS f " +
@@ -67,8 +71,9 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                     "ORDER BY COUNT(ufl.user_id) DESC " +
                     "LIMIT ?";
 
-    public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> filmRowMapper) {
+    public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> filmRowMapper, FilmRowMapper filmRowMapper1) {
         super(jdbc, filmRowMapper);
+        this.filmRowMapper = filmRowMapper1;
     }
 
     public Collection<Film> findAll() {
@@ -138,5 +143,40 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     public Collection<Film> findMostPopular(int count) {
         return findMany(FIND_MOST_POPULAR_QUERY, count);
+    }
+
+    public Collection<Long> getLikedFilmIdsByUserId(Long userId) {
+        String query = "SELECT film_id FROM users_film_likes WHERE user_id = ?";
+        return jdbc.queryForList(query, Long.class, userId);
+    }
+
+    public Collection<Film> findFilmsLikedByUsers(Collection<Long> similarUserIds, Collection<Long> likedFilmIds) {
+        if (similarUserIds == null || similarUserIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String sql = "SELECT f.*, r.rating_name " +
+                "FROM films AS f " +
+                "INNER JOIN users_film_likes AS ufl ON f.film_id = ufl.film_id " +
+                "INNER JOIN ratings AS r ON f.rating_id = r.rating_id " +
+                "WHERE ufl.user_id IN (" + String.join(",", Collections.nCopies(similarUserIds.size(), "?")) + ") " +
+                (likedFilmIds != null && !likedFilmIds.isEmpty() ?
+                        "AND f.film_id NOT IN (" + String.join(",", Collections.nCopies(likedFilmIds.size(), "?")) + ")" : "") +
+                " GROUP BY f.film_id";
+
+        Object[] params = new Object[similarUserIds.size() + (likedFilmIds != null ? likedFilmIds.size() : 0)];
+        int index = 0;
+
+        for (Long userId : similarUserIds) {
+            params[index++] = userId;
+        }
+
+        if (likedFilmIds != null) {
+            for (Long filmId : likedFilmIds) {
+                params[index++] = filmId;
+            }
+        }
+
+        return jdbc.query(sql, params, filmRowMapper);
     }
 }
