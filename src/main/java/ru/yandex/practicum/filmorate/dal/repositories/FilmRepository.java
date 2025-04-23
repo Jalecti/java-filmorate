@@ -69,6 +69,11 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                     "ORDER BY COUNT(ufl.user_id) DESC " +
                     "LIMIT ?";
 
+    private static final String FIND_BY_DIRECTOR =
+                    "SELECT f.*, rating_name FROM films AS f " +
+                    "INNER JOIN ratings AS r ON f.rating_id = r.rating_id " +
+                    "WHERE exists (select 1 from film_directors fd where fd.film_id = f.film_id and fd.director_id = ?)";
+
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> filmRowMapper) {
         super(jdbc, filmRowMapper);
     }
@@ -140,5 +145,9 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     public Collection<Film> findMostPopular(Long count, Long genreId, Integer year) {
         return findMany(FIND_MOST_POPULAR_QUERY, year, genreId, count);
+    }
+
+    public Collection<Film> findByDirector(Long directorId) {
+        return findMany(FIND_BY_DIRECTOR, directorId);
     }
 }
