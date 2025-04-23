@@ -179,6 +179,14 @@ public class FilmService {
             throw new RuntimeException("Ошибка при сортировке: " + e.getMessage());
         }
     }
+  
+    public Collection<FilmDto> getCommonFilms(Long userId, Long friendId) {
+        return filmRepository.getCommonFilms(userId,friendId).stream().map(film -> {
+            Integer likesCount = filmRepository.getCountLikes(film.getId());
+            List<Genre> genres = genreService.getFilmGenres(film.getId());
+            return FilmMapper.mapToFilmDto(film, genres, likesCount);
+        }).collect(Collectors.toList());
+    }
 
     private void checkFilm(Long filmId) {
         Optional<Film> film = filmRepository.getFilmById(filmId);

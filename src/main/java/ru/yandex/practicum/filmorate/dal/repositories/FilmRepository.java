@@ -68,6 +68,13 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                     "GROUP BY f.film_id " +
                     "ORDER BY COUNT(ufl.user_id) DESC " +
                     "LIMIT ?";
+    private static final String GET_COMMON_FILMS_QUERY = "SELECT f.*, r.RATING_NAME FROM films AS f " +
+            "LEFT JOIN ratings AS r ON f.rating_id = r.rating_id " +
+            "INNER  JOIN USERS_FILM_LIKES AS ufl1 ON f.FILM_ID = ufl1.film_id " +
+            "INNER  JOIN USERS_FILM_LIKES AS ufl2 ON f.FILM_ID = ufl2.film_id " +
+            "WHERE ufl1.user_id = ? AND ufl2.user_id = ? " +
+            "GROUP BY f.film_id " +
+            "ORDER BY (SELECT COUNT(*) FROM users_film_likes WHERE film_id = f.film_id) DESC ";
 
     private static final String FIND_BY_DIRECTOR =
                     "SELECT f.*, rating_name FROM films AS f " +
@@ -149,5 +156,9 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     public Collection<Film> findByDirector(Long directorId) {
         return findMany(FIND_BY_DIRECTOR, directorId);
+    }
+  
+    public Collection<Film> getCommonFilms(Long userId, Long friendId) {
+        return findMany(GET_COMMON_FILMS_QUERY, userId, friendId);
     }
 }
