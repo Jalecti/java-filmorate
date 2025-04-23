@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
@@ -75,15 +76,9 @@ public class UserController {
         userService.deleteFromFriends(userId, friendId);
     }
 
-    @GetMapping("/users/{id}/recommendations")
-    public ResponseEntity<Collection<Film>> getRecommendations(@PathVariable Long id) {
-        Collection<Film> recommendations = userService.getRecommendationsForUser(id);
-
-        if (recommendations.isEmpty()) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
-
-        return ResponseEntity.ok(recommendations);
+    @GetMapping("/{userId}/recommendations")
+    public Collection<Film> getRecommendations(@PathVariable("userId") Long id) {
+        return userService.getRecommendationsForUser(id);
     }
 
 }

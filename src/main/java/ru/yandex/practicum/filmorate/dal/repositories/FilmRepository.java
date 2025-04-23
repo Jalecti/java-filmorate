@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.dal.repositories;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.dal.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
@@ -12,8 +11,6 @@ import java.util.Optional;
 
 @Repository
 public class FilmRepository extends BaseRepository<Film> implements FilmStorage {
-
-    private final FilmRowMapper filmRowMapper;
 
     private static final String FIND_ALL_QUERY =
             "SELECT f.*, r.rating_name FROM films AS f " +
@@ -80,9 +77,11 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             "GROUP BY f.film_id " +
             "ORDER BY (SELECT COUNT(*) FROM users_film_likes WHERE film_id = f.film_id) DESC ";
 
-    public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> filmRowMapper, FilmRowMapper filmRowMapper1) {
+    private static final String FIND_FILMS_LIKED_BY_USERS_QUERY =
+            "SELECT f.*, r.rating_name FROM films AS f INNER JOIN users_film_likes AS ufl ON f.film_id = ufl.film_id INNER JOIN ratings AS r ON f.rating_id = r.rating_id WHERE ufl.user_id IN (%s) %s GROUP BY f.film_id";
+
+    public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> filmRowMapper) {
         super(jdbc, filmRowMapper);
-        this.filmRowMapper = filmRowMapper1;
     }
 
     public Collection<Film> findAll() {
@@ -168,16 +167,18 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             return Collections.emptyList();
         }
 
-        String sql = "SELECT f.*, r.rating_name " +
-                "FROM films AS f " +
-                "INNER JOIN users_film_likes AS ufl ON f.film_id = ufl.film_id " +
-                "INNER JOIN ratings AS r ON f.rating_id = r.rating_id " +
-                "WHERE ufl.user_id IN (" + String.join(",", Collections.nCopies(similarUserIds.size(), "?")) + ") " +
-                (likedFilmIds != null && !likedFilmIds.isEmpty() ?
-                        "AND f.film_id NOT IN (" + String.join(",", Collections.nCopies(likedFilmIds.size(), "?")) + ")" : "") +
-                " GROUP BY f.film_id";
+        String placeholdersForUsers = String.join(",", Collections.nCopies(similarUserIds.size(), "?"));
+
+        String additionalConditionForLikedFilms = (likedFilmIds != null && !likedFilmIds.isEmpty()) ?
+                String.format("AND f.film_id NOT IN (%s)",
+                        String.join(",", Collections.nCopies(likedFilmIds.size(), "?"))) : "";
+
+        String sql = String.format(FIND_FILMS_LIKED_BY_USERS_QUERY,
+                placeholdersForUsers,
+                additionalConditionForLikedFilms);
 
         Object[] params = new Object[similarUserIds.size() + (likedFilmIds != null ? likedFilmIds.size() : 0)];
+
         int index = 0;
 
         for (Long userId : similarUserIds) {
@@ -190,6 +191,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             }
         }
 
-        return jdbc.query(sql, params, filmRowMapper);
+        return jdbc.query(sql, params, mapper);
     }
 }

@@ -112,3 +112,4 @@ CREATE TABLE IF NOT EXISTS user_events
     CONSTRAINT ue_event_type_id FOREIGN KEY (event_type_id) REFERENCES user_event_types (type_id) ON DELETE RESTRICT,
     CONSTRAINT ue_operation_id FOREIGN KEY (operation_id) REFERENCES event_operations (operation_id) ON DELETE RESTRICT
 );
+
