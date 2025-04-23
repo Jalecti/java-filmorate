@@ -184,7 +184,9 @@ public class FilmService {
         return filmRepository.getCommonFilms(userId,friendId).stream().map(film -> {
             Integer likesCount = filmRepository.getCountLikes(film.getId());
             List<Genre> genres = genreService.getFilmGenres(film.getId());
-            return FilmMapper.mapToFilmDto(film, genres, likesCount);
+            List<Director> directors = directorService.getFilmDirectors(film.getId());
+
+            return FilmMapper.mapToFilmDto(film, genres, likesCount,directors);
         }).collect(Collectors.toList());
     }
 
