@@ -43,7 +43,7 @@ public class DirectorService {
                     log.error("Пользователь не найден с ID: {}", director.getId());
                     return new NotFoundException("Пользователь не найден с ID: " + director.getId());
                 });
-        return directorStorage.update(updatedDirector);
+        return directorStorage.update(director);
     }
 
     public void delete(Long directorId) {

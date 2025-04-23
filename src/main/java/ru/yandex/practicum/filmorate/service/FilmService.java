@@ -13,7 +13,6 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.*;
 
-import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.*;
@@ -155,31 +154,15 @@ public class FilmService {
         Map<Long, List<Director>> filmDirectors = directorService.getAllFilmsDirectorsMap();
 
         try {
-            String sortByField;
+            Comparator<FilmDto> comparator;
+
             switch (sortBy) {
-                case ("likes") :
-                    sortByField = "likesCount";
-                    break;
-                case ("year") :
-                    sortByField = "releaseDate";
-                    break;
-                default:
-                    sortByField = sortBy;
-                    break;
-            };
-
-            Field sortField = FilmDto.class.getDeclaredField(sortByField);
-
-            Comparator<FilmDto> comparator = (a, b) -> {
-                try {
-                    Comparable valA = (Comparable) sortField.get(a);
-                    Comparable valB = (Comparable) sortField.get(b);
-
-                    return valA.compareTo(valB);
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-            };
+                case "likes" :
+                    comparator = Comparator.comparing(FilmDto::getLikesCount).reversed(); break;
+                case "year" :
+                    comparator = Comparator.comparing(FilmDto::getReleaseDate); break;
+                default : throw new ValidationException("Неверное поле для сортировки");
+                };
 
             return filmRepository.findByDirector(directorId)
                     .stream()
@@ -189,11 +172,8 @@ public class FilmService {
                         List<Director> directors = filmDirectors.get(film.getId());
                         return FilmMapper.mapToFilmDto(film, genres, likesCount, directors);
                     })
-                    .sorted(comparator.reversed())
+                    .sorted(comparator)
                     .collect(Collectors.toList());
-        } catch (NoSuchFieldException e) {
-            log.error("Неверное поле для сортировки");
-            throw new ValidationException("Неверное поле для сортировки");
         } catch (RuntimeException e) {
             log.error("Ошибка при сортировке: {}", e.getMessage());
             throw new RuntimeException("Ошибка при сортировке: " + e.getMessage());
