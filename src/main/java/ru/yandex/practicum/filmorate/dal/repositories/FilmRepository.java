@@ -80,6 +80,9 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String FIND_FILMS_LIKED_BY_USERS_QUERY =
             "SELECT f.*, r.rating_name FROM films AS f INNER JOIN users_film_likes AS ufl ON f.film_id = ufl.film_id INNER JOIN ratings AS r ON f.rating_id = r.rating_id WHERE ufl.user_id IN (%s) %s GROUP BY f.film_id";
 
+    private static final String FIND_FILMS_LIKED_BY_USERS_QUERY =
+            "SELECT f.*, r.rating_name FROM films AS f INNER JOIN users_film_likes AS ufl ON f.film_id = ufl.film_id INNER JOIN ratings AS r ON f.rating_id = r.rating_id WHERE ufl.user_id IN (%s) %s GROUP BY f.film_id";
+
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> filmRowMapper) {
         super(jdbc, filmRowMapper);
     }
@@ -155,6 +158,43 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     public Collection<Film> getCommonFilms(Long userId, Long friendId) {
         return findMany(GET_COMMON_FILMS_QUERY, userId, friendId);
+    }
+
+    public Collection<Long> getLikedFilmIdsByUserId(Long userId) {
+        String query = "SELECT film_id FROM users_film_likes WHERE user_id = ?";
+        return jdbc.queryForList(query, Long.class, userId);
+    }
+
+    public Collection<Film> findFilmsLikedByUsers(Collection<Long> similarUserIds, Collection<Long> likedFilmIds) {
+        if (similarUserIds == null || similarUserIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String placeholdersForUsers = String.join(",", Collections.nCopies(similarUserIds.size(), "?"));
+
+        String additionalConditionForLikedFilms = (likedFilmIds != null && !likedFilmIds.isEmpty()) ?
+                String.format("AND f.film_id NOT IN (%s)",
+                        String.join(",", Collections.nCopies(likedFilmIds.size(), "?"))) : "";
+
+        String sql = String.format(FIND_FILMS_LIKED_BY_USERS_QUERY,
+                placeholdersForUsers,
+                additionalConditionForLikedFilms);
+
+        Object[] params = new Object[similarUserIds.size() + (likedFilmIds != null ? likedFilmIds.size() : 0)];
+
+        int index = 0;
+
+        for (Long userId : similarUserIds) {
+            params[index++] = userId;
+        }
+
+        if (likedFilmIds != null) {
+            for (Long filmId : likedFilmIds) {
+                params[index++] = filmId;
+            }
+        }
+
+        return jdbc.query(sql, params, mapper);
     }
 
     public Collection<Long> getLikedFilmIdsByUserId(Long userId) {
