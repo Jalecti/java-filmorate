@@ -71,14 +71,8 @@ public class UserController {
     }
 
     @GetMapping("/{userId}/recommendations")
-    public ResponseEntity<Collection<Film>> getRecommendations(@PathVariable ("userId") Long id) {
-        Collection<Film> recommendations = userService.getRecommendationsForUser(id);
-
-        if (recommendations.isEmpty()) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
-
-        return ResponseEntity.ok(recommendations);
+    public Collection<Film> getRecommendations(@PathVariable("userId") Long id) {
+        return userService.getRecommendationsForUser(id);
     }
 
 }

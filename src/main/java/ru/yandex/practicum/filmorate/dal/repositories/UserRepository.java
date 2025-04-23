@@ -40,6 +40,9 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             "DELETE FROM users; " +
                     "ALTER TABLE users ALTER COLUMN user_id RESTART WITH 1";
 
+    private static final String FIND_USERS_BY_LIKED_FILM_IDS_QUERY =
+            "SELECT DISTINCT user_id FROM users_film_likes WHERE film_id IN (%s)";
+
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
     }
@@ -89,8 +92,9 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             return Collections.emptyList();
         }
 
-        String sql = "SELECT DISTINCT user_id FROM users_film_likes WHERE film_id IN (" +
-                String.join(",", Collections.nCopies(filmIds.size(), "?")) + ")";
+        String placeholders = String.join(",", Collections.nCopies(filmIds.size(), "?"));
+
+        String sql = String.format(FIND_USERS_BY_LIKED_FILM_IDS_QUERY, placeholders);
 
         Object[] params = filmIds.toArray();
 
