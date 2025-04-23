@@ -157,7 +157,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     public Collection<Film> findByDirector(Long directorId) {
         return findMany(FIND_BY_DIRECTOR, directorId);
     }
-  
+
     public Collection<Film> getCommonFilms(Long userId, Long friendId) {
         return findMany(GET_COMMON_FILMS_QUERY, userId, friendId);
     }
