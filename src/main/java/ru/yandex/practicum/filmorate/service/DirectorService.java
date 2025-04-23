@@ -55,8 +55,8 @@ public class DirectorService {
 
         return filmDirectorStorage.findAll().stream()
                 .collect(Collectors.groupingBy(
-                        FilmDirector::getDirectorId,
-                        Collectors.mapping(filmGenre -> directorMap.get(filmGenre.getDirectorId()), Collectors.toList())
+                        FilmDirector::getFilmId,
+                        Collectors.mapping(filmDirector -> directorMap.get(filmDirector.getDirectorId()), Collectors.toList())
                 ));
     }
 

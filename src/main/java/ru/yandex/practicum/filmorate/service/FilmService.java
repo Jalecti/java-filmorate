@@ -155,7 +155,20 @@ public class FilmService {
         Map<Long, List<Director>> filmDirectors = directorService.getAllFilmsDirectorsMap();
 
         try {
-            Field sortField = FilmDto.class.getDeclaredField(sortBy);
+            String sortByField;
+            switch (sortBy) {
+                case ("likes") :
+                    sortByField = "likesCount";
+                    break;
+                case ("year") :
+                    sortByField = "releaseDate";
+                    break;
+                default:
+                    sortByField = sortBy;
+                    break;
+            };
+
+            Field sortField = FilmDto.class.getDeclaredField(sortByField);
 
             Comparator<FilmDto> comparator = (a, b) -> {
                 try {
@@ -176,7 +189,7 @@ public class FilmService {
                         List<Director> directors = filmDirectors.get(film.getId());
                         return FilmMapper.mapToFilmDto(film, genres, likesCount, directors);
                     })
-                    .sorted()
+                    .sorted(comparator.reversed())
                     .collect(Collectors.toList());
         } catch (NoSuchFieldException e) {
             log.error("Неверное поле для сортировки");
