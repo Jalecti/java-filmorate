@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateFilmRequest;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
@@ -23,7 +24,7 @@ public final class FilmMapper {
         return film;
     }
 
-    public static FilmDto mapToFilmDto(Film film, List<Genre> genres, Integer likesCount) {
+    public static FilmDto mapToFilmDto(Film film, List<Genre> genres, Integer likesCount, List<Director> directors) {
         FilmDto dto = new FilmDto();
         dto.setId(film.getId());
         dto.setName(film.getName());
@@ -33,6 +34,7 @@ public final class FilmMapper {
         dto.setMpa(film.getMpa());
         dto.setGenres(genres);
         dto.setLikesCount(likesCount);
+        dto.setDirectors(directors);
         return dto;
     }
 
