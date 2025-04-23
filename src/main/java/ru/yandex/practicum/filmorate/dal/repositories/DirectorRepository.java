@@ -24,7 +24,7 @@ public class DirectorRepository extends BaseRepository implements DirectorStorag
                     "VALUES (?)";
 
     private static final String UPDATE_QUERY =
-            "UPDATE director SET " +
+            "UPDATE directors SET " +
                     "name = ? " +
                     "WHERE director_id = ?";
 
@@ -72,7 +72,8 @@ public class DirectorRepository extends BaseRepository implements DirectorStorag
     public Director update(Director director) {
         update(
                 UPDATE_QUERY,
-                director.getName()
+                director.getName(),
+                director.getId()
         );
         return director;
     }
