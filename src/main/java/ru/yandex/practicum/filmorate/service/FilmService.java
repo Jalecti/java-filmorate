@@ -1,18 +1,17 @@
 package ru.yandex.practicum.filmorate.service;
 
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.repositories.FilmLikeRepository;
 import ru.yandex.practicum.filmorate.dal.repositories.FilmRepository;
+import ru.yandex.practicum.filmorate.dal.repositories.UserEventRepository;
 import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmLike;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -21,9 +20,11 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@AllArgsConstructor
 public class FilmService {
     private final FilmRepository filmRepository;
     private final FilmLikeRepository filmLikeRepository;
+    private final UserEventRepository userEventRepository;
     private final UserService userService;
     private final RatingService ratingService;
     private final GenreService genreService;
@@ -31,19 +32,6 @@ public class FilmService {
     private static final LocalDate BIRTHDAY_OF_WORLD_CINEMA = LocalDate.of(1895, Month.DECEMBER, 28);
     private static final String FILM_RELEASE_DATE_ERROR_MESSAGE =
             "Некорректная дата релиза. Дата релиза должна быть не раньше 28 декабря 1895 года";
-
-    @Autowired
-    public FilmService(FilmRepository filmRepository,
-                       FilmLikeRepository filmLikeRepository,
-                       UserService userService,
-                       RatingService ratingService,
-                       GenreService genreService) {
-        this.filmRepository = filmRepository;
-        this.filmLikeRepository = filmLikeRepository;
-        this.userService = userService;
-        this.ratingService = ratingService;
-        this.genreService = genreService;
-    }
 
     public Collection<FilmDto> findAll() {
         Map<Long, Integer> filmsLikesCount = getAllFilmsLikesCountMap();
@@ -114,6 +102,7 @@ public class FilmService {
         userService.checkUser(userId);
 
         filmRepository.addLike(filmId, userId);
+        userEventRepository.addUserEvent(userId, filmId, EventType.LIKE.name(), EventOperation.ADD.name());
         log.info("Пользователю с id={} понравился фильм с id={}", userId, filmId);
     }
 
@@ -122,6 +111,7 @@ public class FilmService {
         userService.checkUser(userId);
 
         filmRepository.deleteLike(filmId, userId);
+        userEventRepository.addUserEvent(userId, filmId, EventType.LIKE.name(), EventOperation.REMOVE.name());
         log.info("Пользователь с id={} убрал лайк у фильма с id={}", userId, filmId);
     }
 

@@ -20,3 +20,15 @@ VALUES ('G'),
        ('R'),
        ('NC-17')
 ;
+
+INSERT INTO user_event_types (uet_name)
+VALUES ('LIKE'),
+       ('REVIEW'),
+       ('FRIEND')
+;
+
+INSERT INTO event_operations (eo_name)
+VALUES ('REMOVE'),
+       ('ADD'),
+       ('UPDATE')
+;
