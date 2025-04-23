@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
-@EqualsAndHashCode(of = {"filmId", "genreId"})
+@EqualsAndHashCode(of = {"filmId", "directorId"})
 public class FilmDirector {
     @NotNull
     private Long filmId;
