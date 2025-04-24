@@ -16,7 +16,9 @@ import ru.yandex.practicum.filmorate.model.*;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -35,19 +37,7 @@ public class FilmService {
             "Некорректная дата релиза. Дата релиза должна быть не раньше 28 декабря 1895 года";
 
     public Collection<FilmDto> findAll() {
-        Map<Long, Integer> filmsLikesCount = getAllFilmsLikesCountMap();
-        Map<Long, List<Genre>> filmsGenres = genreService.getAllFilmsGenresMap();
-        Map<Long, List<Director>> filmsDirectors = directorService.getAllFilmsDirectorsMap();
-
-        return filmRepository.findAll()
-                .stream()
-                .map(film -> {
-                    Integer likesCount = filmsLikesCount.get(film.getId());
-                    List<Genre> genres = filmsGenres.get(film.getId());
-                    List<Director> directors = filmsDirectors.get(film.getId());
-                    return FilmMapper.mapToFilmDto(film, genres, likesCount, directors);
-                })
-                .collect(Collectors.toList());
+        return convertCollectionFilmToFilmDto(filmRepository.findAll());
     }
 
     public FilmDto create(@Valid NewFilmRequest request) {
@@ -82,10 +72,7 @@ public class FilmService {
                     return new NotFoundException("Фильм не найден с ID: " + filmId);
                 });
         updatedFilm = filmRepository.update(updatedFilm);
-        List<Genre> genres = genreService.getFilmGenres(filmId);
-        List<Director> directors = directorService.getFilmDirectors(filmId);
-        int likesCount = filmRepository.getCountLikes(filmId);
-        return FilmMapper.mapToFilmDto(updatedFilm, genres, likesCount, directors);
+        return Stream.of(updatedFilm).map(filmDtoMapperLambda()).toList().getFirst();
     }
 
     public boolean delete(Long filmId) {
@@ -94,12 +81,7 @@ public class FilmService {
 
     public FilmDto getFilmById(Long filmId) {
         return filmRepository.getFilmById(filmId)
-                .map(film -> {
-                    Integer likesCount = filmRepository.getCountLikes(film.getId());
-                    List<Genre> genres = genreService.getFilmGenres(film.getId());
-                    List<Director> directors = directorService.getFilmDirectors(film.getId());
-                    return FilmMapper.mapToFilmDto(film, genres, likesCount, directors);
-                })
+                .map(filmDtoMapperLambda())
                 .orElseThrow(() -> {
                     log.error("Фильм не найден с ID: {}", filmId);
                     return new NotFoundException("Фильм не найден с ID: " + filmId);
@@ -133,45 +115,26 @@ public class FilmService {
     }
 
     public Collection<FilmDto> getMostPopular(Long count, Long genreId, Integer year) {
-        Map<Long, Integer> filmsLikesCount = getAllFilmsLikesCountMap();
-        Map<Long, List<Genre>> filmsGenres = genreService.getAllFilmsGenresMap();
-        Map<Long, List<Director>> filmDirectors = directorService.getAllFilmsDirectorsMap();
-
-        return filmRepository.findMostPopular(count, genreId, year)
-                .stream()
-                .map(film -> {
-                    Integer likesCount = filmsLikesCount.get(film.getId());
-                    List<Genre> genres = filmsGenres.get(film.getId());
-                    List<Director> directors = filmDirectors.get(film.getId());
-                    return FilmMapper.mapToFilmDto(film, genres, likesCount, directors);
-                })
-                .collect(Collectors.toList());
+        return convertCollectionFilmToFilmDto(filmRepository.findMostPopular(count, genreId, year));
     }
 
     public Collection<FilmDto> getByDirector(Long directorId, String sortBy) {
-        Map<Long, Integer> filmsLikesCount = getAllFilmsLikesCountMap();
-        Map<Long, List<Genre>> filmsGenres = genreService.getAllFilmsGenresMap();
-        Map<Long, List<Director>> filmDirectors = directorService.getAllFilmsDirectorsMap();
-
         try {
             Comparator<FilmDto> comparator;
 
             switch (sortBy) {
-                case "likes" :
-                    comparator = Comparator.comparing(FilmDto::getLikesCount).reversed(); break;
-                case "year" :
-                    comparator = Comparator.comparing(FilmDto::getReleaseDate); break;
-                default : throw new ValidationException("Неверное поле для сортировки");
-                };
+                case "likes":
+                    comparator = Comparator.comparing(FilmDto::getLikesCount).reversed();
+                    break;
+                case "year":
+                    comparator = Comparator.comparing(FilmDto::getReleaseDate);
+                    break;
+                default:
+                    throw new ValidationException("Неверное поле для сортировки");
+            }
 
-            return filmRepository.findByDirector(directorId)
+            return convertCollectionFilmToFilmDto(filmRepository.findByDirector(directorId))
                     .stream()
-                    .map(film -> {
-                        Integer likesCount = filmsLikesCount.get(film.getId());
-                        List<Genre> genres = filmsGenres.get(film.getId());
-                        List<Director> directors = filmDirectors.get(film.getId());
-                        return FilmMapper.mapToFilmDto(film, genres, likesCount, directors);
-                    })
                     .sorted(comparator)
                     .collect(Collectors.toList());
         } catch (RuntimeException e) {
@@ -181,13 +144,11 @@ public class FilmService {
     }
 
     public Collection<FilmDto> getCommonFilms(Long userId, Long friendId) {
-        return filmRepository.getCommonFilms(userId,friendId).stream().map(film -> {
-            Integer likesCount = filmRepository.getCountLikes(film.getId());
-            List<Genre> genres = genreService.getFilmGenres(film.getId());
-            List<Director> directors = directorService.getFilmDirectors(film.getId());
+        return convertCollectionFilmToFilmDto(filmRepository.getCommonFilms(userId, friendId));
+    }
 
-            return FilmMapper.mapToFilmDto(film, genres, likesCount,directors);
-        }).collect(Collectors.toList());
+    public Collection<FilmDto> findAllByParams(String query, String byValues) {
+        return convertCollectionFilmToFilmDto(filmRepository.findAllByParams(query, byValues));
     }
 
     private void checkFilm(Long filmId) {
@@ -203,5 +164,27 @@ public class FilmService {
             log.error(FILM_RELEASE_DATE_ERROR_MESSAGE);
             throw new ValidationException(FILM_RELEASE_DATE_ERROR_MESSAGE);
         }
+    }
+
+    private Collection<FilmDto> convertCollectionFilmToFilmDto(Collection<Film> films) {
+        Map<Long, Integer> filmsLikesCount = getAllFilmsLikesCountMap();
+        Map<Long, List<Genre>> filmsGenres = genreService.getAllFilmsGenresMap();
+        Map<Long, List<Director>> filmsDirectors = directorService.getAllFilmsDirectorsMap();
+        return films.stream()
+                .map(film -> {
+                    Integer likesCount = filmsLikesCount.getOrDefault(film.getId(), 0);
+                    List<Genre> genres = filmsGenres.getOrDefault(film.getId(), List.of());
+                    List<Director> directors = filmsDirectors.getOrDefault(film.getId(), List.of());
+                    return FilmMapper.mapToFilmDto(film, genres, likesCount, directors);
+                }).toList();
+    }
+
+    private Function<Film, FilmDto> filmDtoMapperLambda() {
+        return film -> {
+            Integer likesCount = filmRepository.getCountLikes(film.getId());
+            List<Genre> genres = genreService.getFilmGenres(film.getId());
+            List<Director> directors = directorService.getFilmDirectors(film.getId());
+            return FilmMapper.mapToFilmDto(film, genres, likesCount, directors);
+        };
     }
 }
