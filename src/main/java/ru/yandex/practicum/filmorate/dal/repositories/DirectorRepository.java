@@ -92,11 +92,14 @@ public class DirectorRepository extends BaseRepository implements DirectorStorag
 
     public List<Director> updateDirectorsForFilm(Long filmId, List<Director> directors) {
         delete(DELETE_FILM_DIRECTOR_QUERY, filmId);
-        directors.forEach(director -> {
-            if (findDirectorById(director.getId()).isPresent()) {
-                jdbc.update(INSERT_FILM_DIRECTOR_QUERY, filmId, director.getId());
-            }
-        });
+
+        if (directors != null)
+            directors.forEach(director -> {
+                if (findDirectorById(director.getId()).isPresent()) {
+                    jdbc.update(INSERT_FILM_DIRECTOR_QUERY, filmId, director.getId());
+                }
+            });
+
         return getFilmDirectors(filmId);
     }
 }

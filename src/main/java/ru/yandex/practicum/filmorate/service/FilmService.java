@@ -63,8 +63,10 @@ public class FilmService {
         Long filmId = request.getId();
         Film updatedFilm = filmRepository.getFilmById(filmId)
                 .map(film -> {
-                    if (request.hasGenres()) genreService.updateGenresForFilm(filmId, request.getGenres());
-                    if (request.hasDirectors()) directorService.updateDirectorForFilm(filmId, request.getDirectors());
+                    genreService.updateGenresForFilm(filmId, request.getGenres());
+
+                    directorService.updateDirectorForFilm(filmId, request.getDirectors());
+
                     return FilmMapper.updateFilmFields(film, request);
                 })
                 .orElseThrow(() -> {
@@ -119,6 +121,12 @@ public class FilmService {
     }
 
     public Collection<FilmDto> getByDirector(Long directorId, String sortBy) {
+        Optional<Director> director = directorService.findDirectorById(directorId);
+        if (director.isEmpty()) {
+            log.error("Директор не найден с ID: {}", directorId);
+            throw new NotFoundException("Директор не найден с ID: " + directorId);
+        }
+
         try {
             Comparator<FilmDto> comparator;
 
