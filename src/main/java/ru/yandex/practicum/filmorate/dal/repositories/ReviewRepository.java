@@ -25,9 +25,7 @@ public class ReviewRepository extends BaseRepository<Review> implements ReviewSt
             "GROUP BY r.review_id";
     private static final String UPDATE_QUERY = "UPDATE reviews SET " +
             "content = ?, " +
-            "is_positive = ?, " +
-            "USER_ID = ?," +
-            "FILM_ID = ? " +
+            "is_positive = ? " +
             "WHERE REVIEW_ID = ?";
     private static final String DELETE_QUERY = "DELETE FROM reviews WHERE REVIEW_ID = ?";
     private static final String FIND_ALL_REVIEW_OF_FILM_QUERY = "SELECT *," +
@@ -72,9 +70,8 @@ public class ReviewRepository extends BaseRepository<Review> implements ReviewSt
         update(UPDATE_QUERY,
                 review.getContent(),
                 review.getIsPositive(),
-                review.getUserId(),
-                review.getFilmId(),
-                review.getReviewId());
+                review.getReviewId()
+                );
         return find(review.getReviewId());
     }
 

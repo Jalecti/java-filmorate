@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dal.repositories.FilmRepository;
 import ru.yandex.practicum.filmorate.dal.repositories.FriendshipRepository;
 import ru.yandex.practicum.filmorate.dal.repositories.UserEventRepository;
 import ru.yandex.practicum.filmorate.dal.repositories.UserRepository;
@@ -15,7 +14,6 @@ import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.model.EventOperation;
 import ru.yandex.practicum.filmorate.model.EventType;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.UserEvent;
 
@@ -28,7 +26,6 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final FriendshipRepository friendshipRepository;
-    private final FilmRepository filmRepository;
     private final UserEventRepository userEventRepository;
 
     public Collection<UserDto> findAll() {
@@ -131,19 +128,7 @@ public class UserService {
         }
     }
 
-    public Collection<Film> getRecommendationsForUser(Long userId) {
-        checkUser(userId);
-
-        Collection<Long> likedFilmIds = filmRepository.getLikedFilmIdsByUserId(userId);
-
-        if (likedFilmIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Long> similarUserIds = userRepository.findUsersByLikedFilmIds(likedFilmIds);
-
-        Collection<Film> recommendedFilms = filmRepository.findFilmsLikedByUsers(similarUserIds, likedFilmIds);
-
-        return recommendedFilms;
+    public List<Long> findUsersByLikedFilmIds(Collection<Long> likedFilmIds) {
+        return userRepository.findUsersByLikedFilmIds(likedFilmIds);
     }
 }
