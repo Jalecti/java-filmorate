@@ -1,9 +1,11 @@
 package ru.yandex.practicum.filmorate.dal.repositories;
 
+import jakarta.validation.ValidationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.SearchParams;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -78,13 +80,29 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             "ORDER BY (SELECT COUNT(*) FROM users_film_likes WHERE film_id = f.film_id) DESC ";
 
     private static final String FIND_FILMS_LIKED_BY_USERS_QUERY =
-            "SELECT f.*, r.rating_name FROM films AS f INNER JOIN users_film_likes AS ufl ON f.film_id = ufl.film_id INNER JOIN ratings AS r ON f.rating_id = r.rating_id WHERE ufl.user_id IN (%s) %s GROUP BY f.film_id";
+            "SELECT f.*, r.rating_name " +
+                    "FROM films AS f " +
+                    "INNER JOIN users_film_likes AS ufl ON f.film_id = ufl.film_id " +
+                    "INNER JOIN ratings AS r ON f.rating_id = r.rating_id " +
+                    "WHERE ufl.user_id IN (%s) %s " +
+                    "GROUP BY f.film_id";
 
 
     private static final String FIND_BY_DIRECTOR =
-                    "SELECT f.*, rating_name FROM films AS f " +
+            "SELECT f.*, rating_name FROM films AS f " +
                     "INNER JOIN ratings AS r ON f.rating_id = r.rating_id " +
                     "WHERE exists (select 1 from film_directors fd where fd.film_id = f.film_id and fd.director_id = ?)";
+
+    private static final String FIND_ALL_BY_PARAMS_QUERY =
+            "SELECT f.*, r.rating_name " +
+                    "FROM films AS f " +
+                    "INNER JOIN ratings AS r ON f.rating_id = r.rating_id " +
+                    "LEFT JOIN film_directors AS fd ON f.film_id = fd.film_id " +
+                    "LEFT JOIN directors AS d ON fd.director_id = d.director_id " +
+                    "LEFT JOIN users_film_likes AS ufl ON f.film_id = ufl.film_id " +
+                    "%s " +
+                    "GROUP BY f.film_id " +
+                    "ORDER BY COUNT(ufl.user_id) DESC";
 
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> filmRowMapper) {
         super(jdbc, filmRowMapper);
@@ -202,5 +220,38 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         }
 
         return jdbc.query(sql, params, mapper);
+    }
+
+    public Collection<Film> findAllByParams(String query, String byValues) {
+        String[] params = byValues.split(",");
+        boolean haveDirector = false;
+        boolean haveTitle = false;
+        for (int i = 0; i < params.length; i++) {
+            if (!SearchParams.isValid(params[i].trim())) {
+                throw new ValidationException(String.format("Передан некорректный параметр: %s", params[i]));
+            }
+
+            if (params[i].trim().equalsIgnoreCase(SearchParams.DIRECTOR.name())) {
+                haveDirector = true;
+            } else if (params[i].trim().equalsIgnoreCase(SearchParams.TITLE.name())) {
+                haveTitle = true;
+            }
+        }
+
+        String where = " WHERE ";
+        String directorParam = " %s d.name ILIKE %s ";
+        String or = " OR ";
+        String titleParam = " %s f.film_name ILIKE %s ";
+        String finalParamStr = "%s %s %s";
+        if (haveDirector && haveTitle) {
+            finalParamStr = finalParamStr.formatted(directorParam.formatted(where, "'%" + query + "%'"), or,
+                    titleParam.formatted("", "'%" + query + "%'"));
+        } else if (haveDirector) {
+            finalParamStr = finalParamStr.formatted(directorParam.formatted(where, "'%" + query + "%'"), "", "");
+        } else if (haveTitle) {
+            finalParamStr = finalParamStr.formatted(titleParam.formatted(where, "'%" + query + "%'"), "", "");
+        }
+
+        return findMany(FIND_ALL_BY_PARAMS_QUERY.formatted(finalParamStr));
     }
 }

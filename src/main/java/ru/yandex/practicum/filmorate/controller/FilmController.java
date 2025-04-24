@@ -70,6 +70,11 @@ public class FilmController {
 
     @GetMapping("/common")
     public Collection<FilmDto> getCommonFilm(@RequestParam long userId, @RequestParam long friendId) {
-        return filmService.getCommonFilms(userId,friendId);
+        return filmService.getCommonFilms(userId, friendId);
+    }
+
+    @GetMapping("/search")
+    public Collection<FilmDto> findAllByParams(@RequestParam String query, @RequestParam String by) {
+        return filmService.findAllByParams(query, by);
     }
 }
