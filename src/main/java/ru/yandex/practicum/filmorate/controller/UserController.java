@@ -5,11 +5,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.UserDto;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.UserEvent;
+import ru.yandex.practicum.filmorate.service.RecommendationService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.*;
@@ -20,6 +21,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final RecommendationService recommendationService;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
@@ -77,8 +79,8 @@ public class UserController {
     }
 
     @GetMapping("/{userId}/recommendations")
-    public Collection<Film> getRecommendations(@PathVariable("userId") Long id) {
-        return userService.getRecommendationsForUser(id);
+    public Collection<FilmDto> getRecommendations(@PathVariable("userId") Long id) {
+        return recommendationService.getRecommendationsForUser(id);
     }
 
 }

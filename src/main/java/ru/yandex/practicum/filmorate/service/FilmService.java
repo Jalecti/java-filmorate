@@ -159,6 +159,14 @@ public class FilmService {
         return convertCollectionFilmToFilmDto(filmRepository.findAllByParams(query, byValues));
     }
 
+    public Collection<Long> getLikedFilmIdsByUserId(Long userId) {
+        return filmRepository.getLikedFilmIdsByUserId(userId);
+    }
+
+    public Collection<Film> findFilmsLikedByUsers(Collection<Long> similarUserIds, Collection<Long> likedFilmIds) {
+        return filmRepository.findFilmsLikedByUsers(similarUserIds, likedFilmIds);
+    }
+
     private void checkFilm(Long filmId) {
         Optional<Film> film = filmRepository.getFilmById(filmId);
         if (film.isEmpty()) {
@@ -174,7 +182,7 @@ public class FilmService {
         }
     }
 
-    private Collection<FilmDto> convertCollectionFilmToFilmDto(Collection<Film> films) {
+    public Collection<FilmDto> convertCollectionFilmToFilmDto(Collection<Film> films) {
         Map<Long, Integer> filmsLikesCount = getAllFilmsLikesCountMap();
         Map<Long, List<Genre>> filmsGenres = genreService.getAllFilmsGenresMap();
         Map<Long, List<Director>> filmsDirectors = directorService.getAllFilmsDirectorsMap();
