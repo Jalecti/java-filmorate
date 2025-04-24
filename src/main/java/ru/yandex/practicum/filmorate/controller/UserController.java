@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.UserDto;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.UserEvent;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.*;
@@ -73,6 +75,11 @@ public class UserController {
     public void deleteFromFriends(@PathVariable("userId") Long userId,
                                   @PathVariable("friendId") Long friendId) {
         userService.deleteFromFriends(userId, friendId);
+    }
+
+    @GetMapping("/{userId}/recommendations")
+    public Collection<Film> getRecommendations(@PathVariable("userId") Long id) {
+        return userService.getRecommendationsForUser(id);
     }
 
 }
