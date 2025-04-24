@@ -1,6 +1,6 @@
 # java-filmorate
 ### Диаграмма БД
-![Диаграмма базы данных](images/db-diagram.png)  
+![Диаграмма базы данных](images/db-diagram.png)
 В реализованной БД названия полей **name** отличаются от тех, что на диаграмме.  
 - Для таблицы users: name -> **user_name** 
 - Для таблицы friendship_statuses: name -> **friendship_status_name** 
