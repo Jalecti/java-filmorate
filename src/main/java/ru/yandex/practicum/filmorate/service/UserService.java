@@ -29,13 +29,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final FriendshipRepository friendshipRepository;
     private final FilmRepository filmRepository;
-
-    @Autowired
-    public UserService(UserRepository userRepository, FriendshipRepository friendshipRepository, FilmRepository filmRepository) {
-        this.userRepository = userRepository;
-        this.friendshipRepository = friendshipRepository;
-        this.filmRepository = filmRepository;
-    }
     private final UserEventRepository userEventRepository;
 
     public Collection<UserDto> findAll() {
