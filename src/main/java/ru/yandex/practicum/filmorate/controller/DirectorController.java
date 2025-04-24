@@ -23,7 +23,7 @@ public class DirectorController {
 
     @GetMapping("/{directorId}")
     public Director getDirectorById(@PathVariable Long directorId) {
-        return directorService.findDirectorBy(directorId);
+        return directorService.findDirectorById(directorId).orElse(null);
     }
 
     @PostMapping

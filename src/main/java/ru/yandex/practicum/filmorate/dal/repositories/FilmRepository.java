@@ -67,7 +67,8 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                     "INNER JOIN ratings AS r ON f.rating_id = r.rating_id " +
                     "LEFT JOIN users_film_likes AS ufl ON f.film_id = ufl.film_id " +
                     "where coalesce(?, EXTRACT(YEAR from release_date)) = EXTRACT(YEAR from release_date) " +
-                    "      and exists (select 1 from film_genres as fg where fg.film_id = f.film_id and coalesce(?, fg.genre_id) = fg.genre_id) " +
+                    "      and (? is null or " +
+                    "           exists (select 1 from film_genres as fg where fg.film_id = f.film_id and coalesce(?, fg.genre_id) = fg.genre_id)) " +
                     "GROUP BY f.film_id " +
                     "ORDER BY COUNT(ufl.user_id) DESC " +
                     "LIMIT ?";
@@ -175,7 +176,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     }
 
     public Collection<Film> findMostPopular(Long count, Long genreId, Integer year) {
-        return findMany(FIND_MOST_POPULAR_QUERY, year, genreId, count);
+        return findMany(FIND_MOST_POPULAR_QUERY, year, genreId, genreId, count);
     }
 
     public Collection<Film> findByDirector(Long directorId) {

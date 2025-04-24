@@ -24,13 +24,13 @@ public class DirectorService {
         return new ArrayList<>(directorStorage.findAll());
     }
 
-    public Director findDirectorBy(Long directorId) {
-        return directorStorage.getDirectorById(directorId)
+    public Optional<Director> findDirectorById(Long directorId) {
+        return Optional.of(directorStorage.getDirectorById(directorId)
                 .orElseThrow(() -> {
                     log.error("Режиссер не найден с ID: {}", directorId);
                     return new NotFoundException("Режиссер не найден с ID: " + directorId);
                 }
-                );
+                ));
     }
 
     public Director create(@Valid Director director) {
