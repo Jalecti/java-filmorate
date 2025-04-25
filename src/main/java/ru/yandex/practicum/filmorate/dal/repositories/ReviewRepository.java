@@ -82,11 +82,11 @@ public class ReviewRepository extends BaseRepository<Review> implements ReviewSt
 
     @Override
     public Review find(long id) {
-        return findOne(FIND_BY_ID_QUERY, id).orElseThrow(() -> new NotFoundException("Review not found"));
+        return findOne(FIND_BY_ID_QUERY, id).orElseThrow(() -> new NotFoundException("Review not found id=" + id));
     }
 
     @Override
-    public List<Review> findAll(Integer filmId, Integer limit) {
+    public List<Review> findAll(Long filmId, Integer limit) {
         if (limit == null) {
             limit = 10;
         }

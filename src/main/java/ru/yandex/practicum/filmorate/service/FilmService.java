@@ -117,6 +117,11 @@ public class FilmService {
     }
 
     public Collection<FilmDto> getMostPopular(Long count, Long genreId, Integer year) {
+        if (year != null && year < BIRTHDAY_OF_WORLD_CINEMA.getYear()) {
+            throw new ValidationException("Указан некорректный год выпуска фильма year=" + year +
+                    ". Должен быть year>=" + BIRTHDAY_OF_WORLD_CINEMA.getYear());
+        }
+        if (genreId != null) genreService.findGenreById(genreId);
         return convertCollectionFilmToFilmDto(filmRepository.findMostPopular(count, genreId, year));
     }
 
@@ -152,6 +157,8 @@ public class FilmService {
     }
 
     public Collection<FilmDto> getCommonFilms(Long userId, Long friendId) {
+        userService.checkUser(userId);
+        userService.checkUser(friendId);
         return convertCollectionFilmToFilmDto(filmRepository.getCommonFilms(userId, friendId));
     }
 
@@ -167,7 +174,8 @@ public class FilmService {
         return filmRepository.findFilmsLikedByUsers(similarUserIds, likedFilmIds);
     }
 
-    private void checkFilm(Long filmId) {
+    public void checkFilm(Long filmId) {
+        if (filmId == null) return;
         Optional<Film> film = filmRepository.getFilmById(filmId);
         if (film.isEmpty()) {
             log.error("Фильм не найден с ID: {}", filmId);
