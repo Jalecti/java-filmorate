@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import jakarta.validation.ValidationException;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.repositories.ReviewStorage;
 import ru.yandex.practicum.filmorate.dal.repositories.UserEventRepository;
@@ -14,7 +13,6 @@ import ru.yandex.practicum.filmorate.model.Review;
 import java.util.List;
 
 @Service
-@Slf4j
 @AllArgsConstructor
 public class ReviewsService {
     private final ReviewStorage reviewStorage;
