@@ -17,9 +17,13 @@ import java.util.List;
 public class ReviewsService {
     private final ReviewStorage reviewStorage;
     private final UserEventRepository userEventRepository;
+    private final UserService userService;
+    private final FilmService filmService;
 
     public Review addReview(Review review) {
         validateReview(review);
+        userService.checkUser(review.getUserId());
+        filmService.checkFilm(review.getFilmId());
         Review addedReview = reviewStorage.create(review);
         userEventRepository.addUserEvent(addedReview.getUserId(), addedReview.getReviewId(),
                 EventType.REVIEW.name(), EventOperation.ADD.name());
@@ -27,6 +31,9 @@ public class ReviewsService {
     }
 
     public Review updateReview(Review review) {
+        getReviewById(review.getReviewId());
+        userService.checkUser(review.getUserId());
+        filmService.checkFilm(review.getFilmId());
         Review updatedReview = reviewStorage.update(review);
         userEventRepository.addUserEvent(updatedReview.getUserId(), updatedReview.getReviewId(),
                 EventType.REVIEW.name(), EventOperation.UPDATE.name());
@@ -47,23 +54,32 @@ public class ReviewsService {
         return reviewStorage.find(reviewId);
     }
 
-    public List<Review> getReviews(Integer filmId, Integer limit) {
+    public List<Review> getReviews(Long filmId, Integer limit) {
+        filmService.checkFilm(filmId);
         return reviewStorage.findAll(filmId, limit);
     }
 
     public Review addLike(long reviewId, long userId) {
+        userService.checkUser(userId);
+        getReviewById(reviewId);
         return reviewStorage.addLike(userId, reviewId, true);
     }
 
     public Review addDislike(long reviewId, long userId) {
+        userService.checkUser(userId);
+        getReviewById(reviewId);
         return reviewStorage.addLike(userId, reviewId, false);
     }
 
     public boolean removeLike(long reviewId, long userId) {
+        userService.checkUser(userId);
+        getReviewById(reviewId);
         return reviewStorage.removeLike(userId, reviewId, true);
     }
 
     public boolean removeDislike(long reviewId, long userId) {
+        userService.checkUser(userId);
+        getReviewById(reviewId);
         return reviewStorage.removeLike(userId, reviewId, false);
     }
 
@@ -88,4 +104,5 @@ public class ReviewsService {
             throw new ValidationException(errorMessage + "isPositive=" + review.getIsPositive());
         }
     }
+
 }

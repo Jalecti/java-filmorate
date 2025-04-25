@@ -13,7 +13,7 @@ public interface ReviewStorage {
 
     Review find(long id);
 
-    List<Review> findAll(Integer filmId, Integer limit);
+    List<Review> findAll(Long filmId, Integer limit);
 
     Review addLike(long userId, long reviewId, boolean isPositive);
 
