@@ -1,32 +1,32 @@
 package ru.yandex.practicum.filmorate.service;
 
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.repositories.FriendshipRepository;
+import ru.yandex.practicum.filmorate.dal.repositories.UserEventRepository;
 import ru.yandex.practicum.filmorate.dal.repositories.UserRepository;
 import ru.yandex.practicum.filmorate.dto.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.dto.UserDto;
+import ru.yandex.practicum.filmorate.model.EventOperation;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserEvent;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@AllArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final FriendshipRepository friendshipRepository;
-
-    @Autowired
-    public UserService(UserRepository userRepository, FriendshipRepository friendshipRepository) {
-        this.userRepository = userRepository;
-        this.friendshipRepository = friendshipRepository;
-    }
+    private final UserEventRepository userEventRepository;
 
     public Collection<UserDto> findAll() {
         return userRepository.findAll()
@@ -62,6 +62,7 @@ public class UserService {
         checkUser(friendId);
 
         friendshipRepository.addToFriends(userId, friendId);
+        userEventRepository.addUserEvent(userId, friendId, EventType.FRIEND.name(), EventOperation.ADD.name());
         log.info("Пользователи с id={} и id={} добавлены в друзья друг к другу", userId, friendId);
     }
 
@@ -70,6 +71,7 @@ public class UserService {
         checkUser(friendId);
 
         friendshipRepository.deleteFromFriends(userId, friendId);
+        userEventRepository.addUserEvent(userId, friendId, EventType.FRIEND.name(), EventOperation.REMOVE.name());
         log.info("Пользователи с id={} и id={} удалены из друзей друг у друга", userId, friendId);
     }
 
@@ -113,11 +115,20 @@ public class UserService {
                 });
     }
 
+    public List<UserEvent> getUserEvents(Long userId) {
+        checkUser(userId);
+        return userEventRepository.findAllByUserId(userId);
+    }
+
     public void checkUser(Long userId) {
         Optional<User> user = userRepository.getUserById(userId);
         if (user.isEmpty()) {
             log.error("Пользователь не найден с ID: {}", userId);
             throw new NotFoundException("Пользователь не найден с ID: " + userId);
         }
+    }
+
+    public List<Long> findUsersByLikedFilmIds(Collection<Long> likedFilmIds) {
+        return userRepository.findUsersByLikedFilmIds(likedFilmIds);
     }
 }

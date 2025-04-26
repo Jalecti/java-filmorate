@@ -13,7 +13,11 @@ public final class UserMapper {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setLogin(request.getLogin());
-        user.setName(request.getName());
+        if (request.getName().isBlank()) {
+            user.setName(request.getLogin());
+        } else {
+            user.setName(request.getName());
+        }
         user.setBirthday(request.getBirthday());
 
         return user;

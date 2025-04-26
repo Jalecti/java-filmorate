@@ -57,11 +57,14 @@ public class GenreRepository extends BaseRepository<Genre> {
 
     public List<Genre> updateGenresForFilm(Long filmId, List<Genre> genres) {
         delete(DELETE_QUERY, filmId);
-        genres.forEach(genre -> {
-            if (findGenreById(genre.getId()).isPresent()) {
-                jdbc.update(INSERT_QUERY, filmId, genre.getId());
-            }
-        });
+
+        if (genres != null)
+            genres.forEach(genre -> {
+                if (findGenreById(genre.getId()).isPresent()) {
+                    jdbc.update(INSERT_QUERY, filmId, genre.getId());
+                }
+            });
+
         return getFilmGenres(filmId);
     }
 

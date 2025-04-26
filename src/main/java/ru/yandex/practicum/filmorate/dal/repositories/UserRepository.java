@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -37,6 +39,9 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     private static final String DELETE_ALL_QUERY =
             "DELETE FROM users; " +
                     "ALTER TABLE users ALTER COLUMN user_id RESTART WITH 1";
+
+    private static final String FIND_USERS_BY_LIKED_FILM_IDS_QUERY =
+            "SELECT DISTINCT user_id FROM users_film_likes WHERE film_id IN (%s)";
 
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
@@ -80,5 +85,19 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
 
     public void deleteAll() {
         jdbc.update(DELETE_ALL_QUERY);
+    }
+
+    public List<Long> findUsersByLikedFilmIds(Collection<Long> filmIds) {
+        if (filmIds == null || filmIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String placeholders = String.join(",", Collections.nCopies(filmIds.size(), "?"));
+
+        String sql = String.format(FIND_USERS_BY_LIKED_FILM_IDS_QUERY, placeholders);
+
+        Object[] params = filmIds.toArray();
+
+        return jdbc.queryForList(sql, params, Long.class);
     }
 }
